@@ -102,6 +102,7 @@ static void install_sigint_handler(void)
 struct options
 {
 	bool verbose;
+	long camNumber;
 	long exposure_ms;
 	bool gain_auto;
 	bool exposure_auto;
@@ -119,6 +120,7 @@ void parse_command_line(int argc, char **argv, options *dest)
 	int optc;
 
 	// Set defaults
+	dest->camNumber =0;
 	dest->exposure_ms = 0;
 	dest->exposure_auto = false;
 	dest->gain_auto = false;
@@ -131,7 +133,7 @@ void parse_command_line(int argc, char **argv, options *dest)
 	dest->maxGain = 100;
 	dest->maxExp = 100;
 
-	while ((optc = getopt(argc, argv, "h:Ee:Gg:p:v:f:Mm:c")) != -1)
+	while ((optc = getopt(argc, argv, "n:h:Ee:Gg:p:v:f:Mm:c")) != -1)
 	{
 		switch (optc)
 		{
@@ -140,6 +142,9 @@ void parse_command_line(int argc, char **argv, options *dest)
 			break;
 		case 'm':
 			dest->maxExp = atoi(optarg);
+			break;
+		case 'n':
+			dest->camNumber = atoi(optarg);
 			break;
 		case 'e':
 			dest->exposure_ms = atoi(optarg);
@@ -182,6 +187,9 @@ void parse_command_line(int argc, char **argv, options *dest)
 		case 'h':
 		case '?':
 			printf("Usage: %s\n"
+			
+				   "  -c Enable write Text to Image (default off)\n"	   
+				   "  -n Number of the Camera (default 0)\n"
 				   "  -E Enable auto exposure (default off)\n"
 				   "  -e {exposure time} Set exposure time in ms (default 500 ms)\n"
 				   "  -G Enable auto gain (default off)\n"
@@ -227,7 +235,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "\t%d: %s\n", i, CamInfo.Name);
 	}
 
-	CamIndex = 0;
+	CamIndex = opt.camNumber;
 
 	ASIGetCameraProperty(&CamInfo, CamIndex);
 	bresult = ASIOpenCamera(CamInfo.CameraID);
