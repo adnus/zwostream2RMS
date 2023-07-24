@@ -7,8 +7,6 @@ Than RMS can grab the pictures from this video device for meteor detection.
 
 Stream to a v4l2loopback device and grab it with RMS Meteor Capture:
 
-./zwostream2RMS -E | ffmpeg -f rawvideo -pixel_format gray8 -vcodec rawvideo -video_size 1936x1216 -i pipe:0 -vf format=yuv420p -f v4l2 /dev/video0
-
 ## requirements
 
 The ZWO ASI SDK is installed in the directory above, so the libs and headers
@@ -49,7 +47,3 @@ and then use RMS to capture the video stream from '0', see RMS config file.
 
 #### This is the way!
 
-
-
-
-This is the way
