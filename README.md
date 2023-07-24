@@ -9,10 +9,20 @@ Stream to a v4l2loopback device and grab it with RMS Meteor Capture:
 
 ## requirements
 
+Linux Mint (or similar), a mini pc. we have a Zotac Nano with 4 cores. 
+
 The ZWO ASI SDK is installed in the directory above, so the libs and headers
 are in ../lib/x64/ and ../include/.
 
-opencv4
+### opencv4
+
+### v4l2loopback
+
+```
+sudo apt-get install v4l2loopback-dkms v4l2loopback-utils
+sudo modprobe v4l2loopback devices=2
+```
+
 
 ## day 7, break through !!
 
