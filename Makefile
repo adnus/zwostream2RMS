@@ -26,7 +26,7 @@ CFLAGS += -lrt
 endif
 
 #CFLAGS += -L./sdk/lib/$(platform) -I./sdk/include -pedantic -Wimplicit-fallthrough -Wall -Werror -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_imgcodecs -lopencv_videoio
-CFLAGS += -L../lib/$(platform) -I../include -pedantic -Wimplicit-fallthrough -Wall -Werror -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_videoio
+CFLAGS += -L../lib/$(platform) -I../include -pedantic -Wimplicit-fallthrough -Wall -Werror -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_videoio -lopencv_imgcodecs
 LIBSPATH = -L../lib/$(platform) -I../include -I/usr/include/opencv4
 
 

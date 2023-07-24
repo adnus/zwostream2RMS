@@ -9,6 +9,9 @@
 #include <signal.h>
 #include <unistd.h> // for isatty
 #include <stdarg.h>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui/highgui_c.h"
+
 
 #define DISABLE_OPENCV_24_COMPATIBILITY
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
@@ -120,7 +123,7 @@ void parse_command_line(int argc, char **argv, options *dest)
 	int optc;
 
 	// Set defaults
-	dest->camNumber =0;
+	dest->camNumber = 0;
 	dest->exposure_ms = 0;
 	dest->exposure_auto = false;
 	dest->gain_auto = false;
@@ -175,6 +178,11 @@ void parse_command_line(int argc, char **argv, options *dest)
 				dest->asi_image_type = ASI_IMG_RAW16;
 				dest->cv_array_type = CV_16UC1;
 			}
+			//else if (strcasecmp(optarg, "RGB24") == 0)
+			//{
+			//	dest->asi_image_type = ASI_IMG_RGB24;
+			//	dest->cv_array_type = CV_8UC1;
+			//}
 			else
 			{
 				fprintf(stderr, "invalid argument for -p option: %s\n", optarg);
@@ -187,7 +195,6 @@ void parse_command_line(int argc, char **argv, options *dest)
 		case 'h':
 		case '?':
 			printf("Usage: %s\n"
-			
 				   "  -c Enable write Text to Image (default off)\n"	   
 				   "  -n Number of the Camera (default 0)\n"
 				   "  -E Enable auto exposure (default off)\n"
@@ -237,6 +244,11 @@ int main(int argc, char **argv)
 
 	CamIndex = opt.camNumber;
 
+    long image_size = 0;
+    int image_bytes = 1;
+
+
+
 	ASIGetCameraProperty(&CamInfo, CamIndex);
 	bresult = ASIOpenCamera(CamInfo.CameraID);
 	bresult += ASIInitCamera(CamInfo.CameraID);
@@ -249,6 +261,25 @@ int main(int argc, char **argv)
 
 	fprintf(stderr, "%s information\n", CamInfo.Name);
 	fprintf(stderr, "\tResolution: %ldx%ld\n", CamInfo.MaxWidth, CamInfo.MaxHeight);
+
+
+	
+	// Calculate image size
+    image_size = CamInfo.MaxWidth * CamInfo.MaxHeight;
+    if (CamInfo.IsColorCam == ASI_FALSE) {
+        // Mono image
+        if (CamInfo.BitDepth > 8) {
+            // Bit depth > 8 bits, assume 16 bits
+            image_bytes = 2;
+        }
+    } else {
+        // Color camera: assume RGB24 (3 bytes)
+        image_bytes = 3;
+    }
+    image_size *= image_bytes;
+    fprintf(stderr,"Image size: %ld bytes\n", image_size);
+
+
 
 	if (CamInfo.IsColorCam)
 	{
@@ -278,7 +309,7 @@ int main(int argc, char **argv)
 	long sensorTemp;
 
 	// const string args = "appsrc ! videoconvert ! vaapih264enc rate-control=cbr bitrate=3000 quality-level=4 keyframe-period=30 num-slices=1 refs=1 max-bframes=2 ! rtspclientsink location=rtsp://localhost:8554/live.sdp";
-      const string args = "appsrc ! videoconvert ! video/x-raw,format=BGRx ! identity drop-allocation=true ! v4l2sink device=/dev/video0";
+        // const string args = "appsrc ! videoconvert ! video/x-raw,format=BGRx ! identity drop-allocation=true ! v4l2sink device=/dev/video0";
 
 	ASISetControlValue(CamInfo.CameraID, ASI_EXPOSURE, exp, opt.exposure_auto ? ASI_TRUE : ASI_FALSE);
 	ASISetControlValue(CamInfo.CameraID, ASI_GAIN, gain, opt.gain_auto ? ASI_TRUE : ASI_FALSE);
@@ -303,9 +334,9 @@ int main(int argc, char **argv)
 	
 
 	ASISetROIFormat(CamInfo.CameraID, CamInfo.MaxWidth, CamInfo.MaxHeight, 1, opt.asi_image_type);
-	cv::Mat img(CamInfo.MaxHeight, CamInfo.MaxWidth, opt.cv_array_type);
-
-	//cv::VideoWriter videoWriter(args, 0, fps, cv::Size(CamInfo.MaxWidth, CamInfo.MaxHeight), false);
+	
+	//cv::Mat rgb_image;
+	cv::Mat raw_image(CamInfo.MaxHeight, CamInfo.MaxWidth, opt.cv_array_type);
 
 	ASIStartVideoCapture(CamInfo.CameraID);
 	while (!exit_mainloop)
@@ -313,7 +344,7 @@ int main(int argc, char **argv)
 		ASI_ERROR_CODE code;
 		ASI_BOOL bVal;
 
-		code = ASIGetVideoData(CamInfo.CameraID, img.data, img.elemSize() * img.size().area(), 2000);
+		code = ASIGetVideoData(CamInfo.CameraID, raw_image.data, image_size, 2000);
 		if (code != ASI_SUCCESS)
 		{
 			fprintf(stderr, "ASIGetVideoData() error: %d\n", code);
@@ -346,13 +377,18 @@ int main(int argc, char **argv)
 			// make no sense for stream to RMS
 			if (opt.cvwrite) {
 			imgPrintf(
-				img,
+				raw_image,
 				"%s Gain:%ld Exp:%s Frame:%lu Temp:%.0fC",
 				timestamp, gain, exposure.c_str(), fCount, sensorTemp / 10.0);
                         }
-			// write the frame to the rstp server
-			//videoWriter.write(img);
-			fwrite(img.data, img.elemSize(), img.size().area(), stdout);
+                        // dosn't work!
+                        //if (CamInfo.IsColorCam) {
+                        //  cvtColor(raw_image, rgb_image, CV_BayerBG2BGR, 0);
+			//  fwrite(rgb_image.data, rgb_image.elemSize(), rgb_image.size().area(), stdout);
+		        //}
+		        //else {
+		          fwrite(raw_image.data, raw_image.elemSize(), raw_image.size().area(), stdout);
+		        //}
 		        fflush(stdout);
 			// sleep the loop so it matches the fps of the output
 			sleep(1 / fps);
