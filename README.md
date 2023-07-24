@@ -55,5 +55,12 @@ and then use RMS to capture the video stream from '0', see RMS config file.
 
 \-g200 is maybe not the best value, I'm testing it. -e100 should be 0.1sec, so you get 10 pictures per second. This is a theory.
 
+## ToDo
+
+  * test the binning, maybe it's good for the 178mc
+  * performance, ffmpeg is warm up the cpu, so find a way to reduce the cpu usage by ffmpeg; maybe streaming of the asi 178mc is not a good idea
+  * better text write to the snap image, font is to small
+  * maybe we can use opencv for snap and the image in the video capture routine, this can give us a better performance
+
 #### This is the way!
 
