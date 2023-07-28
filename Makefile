@@ -1,4 +1,4 @@
-ver = debug
+# ver = debug
 platform := x64
 
 # Raspberry Pi in 32-bit LE mode
